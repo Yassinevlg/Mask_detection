@@ -1,0 +1,191 @@
+# 🚀 DÉMARRER MAINTENANT - Mask Detection CNN (Mode LOCAL)
+
+**Votre notebook est prêt pour exécution locale !**
+
+---
+
+## ⚡ 3 Étapes pour Commencer
+
+### 1️⃣ Vérifier l'Environnement (5 min)
+
+```bash
+cd Portfolio/plugins/mask-detection-cnn
+python verify_environment.py
+```
+
+**Vous devriez voir:** ✅ ENVIRONNEMENT PRÊT!
+
+Si erreurs, installez les dépendances:
+```bash
+pip install -r requirements.txt
+```
+
+---
+
+### 2️⃣ Ouvrir le Notebook (VS Code)
+
+1. Ouvrir le fichier:
+   - `notebooks/mask-detection-cnn_notebook.ipynb`
+
+2. VS Code va suggérer le kernel → Accepter
+
+---
+
+### 3️⃣ Exécuter les Phases en Ordre
+
+#### Phase 1 - Environnement (⚡ 1 min)
+```
+Cellule 6:  Vérification dépendances
+Cellule 7:  Vérification GPU
+Cellule 9:  Configuration chemins ← À vérifier
+```
+
+**Vous verrez:**
+```
+=== Configuration Environnement Local ===
+Notebook: C:\...\plugins\mask-detection-cnn\notebooks
+Dossier données: C:\...\plugins\mask-detection-cnn\data
+Dossier modèles: C:\...\plugins\mask-detection-cnn\models
+✓ Dossiers vérifiés
+```
+
+---
+
+#### Phase 2 - Données (⏱️ 5-10 min)
+```
+Cellule 10: Télécharger dataset (~500MB, peu être long)
+Cellule 11: Explorer dataset
+Cellule 12: Prétraiter images
+Cellule 13: Split train/val/test (CRUCIAL!)
+```
+
+**Important:** Exécutez ces 4 cellules dans l'ordre!
+
+---
+
+#### Phase 3 - Entraînement (⏱️ 10-30 min selon GPU)
+```
+Cellule 15: Construire CNN
+Cellule 16: Compiler + Callbacks
+Cellule 17: ENTRAÎNER ← Attendez la fin
+Cellule 18: VÉRIFIER SAUVEGARDE ← 🔴 CRIRIQUE
+Cellule 19: Conversion TF.js (optionnel, peut échouer)
+```
+
+**À Cellule 18, cherchez:**
+```
+============================================================
+✓ Modèle final sauvegardé: C:\...\mask_detection_model.keras
+  Taille: XX.XX MB
+
+✅ CONFIGURATION LOCAL COMPLÈTE ET VÉRIFIÉE
+
+============================================================
+VÉRIFICATION FINALE - CONTENU DU DOSSIER MODÈLES
+============================================================
+
+Fichiers présents:
+  ✓ best_model.keras (XX.XX MB)
+  ✓ mask_detection_model.keras (XX.XX MB)
+
+✅ SAUVEGARDE RÉUSSIE
+```
+
+**Si vous ne voyez pas ✅ SAUVEGARDE RÉUSSIE → Problème! Relancez la cellule 17.**
+
+---
+
+#### Phase 4 - Évaluation (⚡ 2-5 min)
+```
+Cellule 20: Évaluer sur test set
+Cellule 21: Matrice confusion
+Cellule 22: Courbes convergence
+```
+
+---
+
+## 📊 Résultats Attendus
+
+### Après Cellule 17 (Entraînement)
+```
+Entraînement terminé (XYZs)
+```
+
+### À Cellule 18 (Vérification)
+```
+✓ Checkpoint exist: .../models/best_model.keras
+✓ Modèle sauvegardé
+✓ Fichier existe
+✓ Modèle peut être chargé
+✓ SAUVEGARDE RÉUSSIE
+```
+
+### À Cellule 20 (Évaluation)
+```
+Accuracy:  0.XXXX
+Precision: 0.XXXX
+Recall:    0.XXXX
+F1-score:  0.XXXX
+```
+
+---
+
+## 🗂️ Où Trouver le Modèle
+
+**Emplacement final:** `plugins/mask-detection-cnn/models/`
+
+```bash
+# Vérifier dans terminal
+ls -lh plugins/mask-detection-cnn/models/
+```
+
+**Vous devriez voir:**
+```
+-rw-r--r--  XX.XX MB  best_model.keras
+-rw-r--r--  XX.XX MB  mask_detection_model.keras  ← CELUI-CI (le plus important)
+drwxr-xr-x                tfjs_model/              ← Optionnel
+```
+
+---
+
+## ⚠️ Points Critiques
+
+| ⚠️ Problème | ✅ Solution |
+|-----------|-----------|
+| `NameError: X_test not defined` | Exécutez cellules 10-13 complètement |
+| Cellule 18 affiche ERROR | Relancez cellule 17 |
+| Modèle introuvable après training | Vérifiez le dossier `models/` existe |
+| OutOfMemory | Réduisez EPOCHS (cellule 17) ou BATCH_SIZE |
+| TF.js conversion échoue | C'est OK, c'est optionnel. Modèle Keras fonctionne |
+
+---
+
+## 📖 Lecture Recommandée
+
+1. **D'abord lire:** `CONFIGURATION_RESUME.md` (vue d'ensemble)
+2. **Puis lire:** `GUIDE_EXECUTION_LOCAL.md` (instructions détaillées)
+3. **Exécuter:** Le notebook dans l'ordre
+
+---
+
+## ✅ Checklist Finale
+
+- [ ] `python verify_environment.py` ✓ PASS
+- [ ] Notebook ouvert dans VS Code
+- [ ] Cellule 9 exécutée (dossiers créés)
+- [ ] Cellule 17 exécutée (entraînement terminé)
+- [ ] Cellule 18 affiche ✅ SAUVEGARDE RÉUSSIE
+- [ ] Fichier `models/mask_detection_model.keras` existe
+- [ ] Cellule 20 affiche les métriques
+
+---
+
+## 🎯 Résumé en 1 Phrase
+
+**Exécutez les cellules 6-23 dans l'ordre, vérifiez que cellule 18 affiche "SAUVEGARDE RÉUSSIE", et contrôlez que le fichier existe dans `models/`.**
+
+---
+
+**Bonne exécution! 🚀**
+
+Questions? Consultez `GUIDE_EXECUTION_LOCAL.md`

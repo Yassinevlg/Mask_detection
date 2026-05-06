@@ -1,0 +1,17 @@
+report/*
+!report/.gitkeep
+!report/mask-detection-cnn_report.pdf
+!report/rapport_detection_masque_cnn.tex
+.env
+.env.local
+.env.*.local
+.venv/
+__pycache__/
+.ipynb_checkpoints/
+*.pyc
+data/raw/*
+!data/raw/.gitkeep
+data/processed/*
+!data/processed/.gitkeep
+model/*
+!model/.gitkeep

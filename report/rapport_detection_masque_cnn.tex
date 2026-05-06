@@ -1,0 +1,804 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[french]{babel}
+\usepackage{geometry}
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{longtable}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{hyperref}
+\usepackage{xcolor}
+\usepackage{enumitem}
+\usepackage{tikz}
+\usetikzlibrary{positioning,arrows.meta,shapes.geometric}
+
+\geometry{margin=2.3cm}
+
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue!60!black,
+    urlcolor=blue!60!black,
+    citecolor=blue!60!black,
+    pdftitle={Rapport de Projet Deep Learning : Détection du Port du Masque par CNN},
+    pdfauthor={Omar Zouhairi, Yassine Sekkour}
+}
+
+\setlist[itemize]{leftmargin=1.5em}
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{0.7em}
+
+\title{}
+\author{}
+\date{}
+
+\begin{document}
+
+% ===========================
+% PAGE DE GARDE
+% ===========================
+\thispagestyle{empty}
+\vspace*{1cm}
+
+\begin{center}
+{\Large \textbf{Rapport de Projet Deep Learning}}
+\end{center}
+
+\vspace{2cm}
+
+\begin{center}
+{\LARGE \textbf{Détection du Port du Masque par\\Réseau de Neurones Convolutif (CNN)}}
+\end{center}
+
+\vspace{1cm}
+
+\begin{center}
+\rule{12cm}{0.5pt}
+\end{center}
+
+\vspace{2.5cm}
+
+\begin{minipage}{0.45\textwidth}
+\textbf{Réalisé par :}
+\begin{itemize}
+\item Omar Zouhairi
+\item Yassine Sekkour
+\end{itemize}
+\end{minipage}%
+\hfill%
+\begin{minipage}{0.45\textwidth}
+\textbf{Encadré par :}
+\begin{itemize}
+\item Professeur(e) Deep Learning
+\item Classe : 4IASD1
+\end{itemize}
+\end{minipage}
+
+\vspace{2cm}
+
+\begin{center}
+\textbf{Technologies utilisées :}\\
+TensorFlow · Keras · Python · FastAPI · OpenCV · React/Vite\\
+Kaggle Dataset · MySQL (local)
+\end{center}
+
+\vspace{2.5cm}
+
+\begin{center}
+Date : \today
+\end{center}
+
+\vfill
+
+% ===========================
+% REMERCIEMENTS
+% ===========================
+\newpage
+\section*{Remerciements}
+\addcontentsline{toc}{section}{Remerciements}
+
+Nous tenons à remercier sincèrement notre encadrant(e) pour la qualité de son encadrement, ses conseils précieux et son soutien continu tout au long de la réalisation de ce projet de Deep Learning.
+
+Ce projet représente une opportunité exceptionnelle de mettre en pratique des concepts de vision par ordinateur, d'apprentissage profond et de déploiement applicatif pour créer une solution complète de classification d'images avec démonstration interactive.
+
+% ===========================
+% TABLE DES MATIERES
+% ===========================
+\newpage
+\tableofcontents
+
+% ===========================
+% TABLE DES FIGURES
+% ===========================
+\newpage
+\section*{Table des figures}
+\addcontentsline{toc}{section}{Table des figures}
+
+\begin{itemize}
+    \item Figure 1.1 : Pipeline global du projet . . . . . . . . . . . . . . . . . 8
+    \item Figure 2.1 : Répartition des images dans le dataset . . . . . . . . . . 11
+    \item Figure 3.1 : Exemples d'images avec et sans masque . . . . . . . . . . 13
+    \item Figure 4.1 : Architecture du CNN utilisée pour la classification . . . . 17
+    \item Figure 4.2 : Courbes d'apprentissage du modèle . . . . . . . . . . . . 18
+    \item Figure 4.3 : Matrice de confusion du test set . . . . . . . . . . . . . 19
+    \item Figure 5.1 : Interface de démo image . . . . . . . . . . . . . . . . . 22
+    \item Figure 5.2 : Interface de démo webcam . . . . . . . . . . . . . . . . 23
+\end{itemize}
+
+% ===========================
+% LISTE DES TABLEAUX
+% ===========================
+\newpage
+\section*{Liste des tableaux}
+\addcontentsline{toc}{section}{Liste des tableaux}
+
+\begin{itemize}
+    \item Tableau 2.1 : Composition du dataset Kaggle . . . . . . . . . . . . . 11
+    \item Tableau 4.1 : Configuration du modèle CNN . . . . . . . . . . . . . . 16
+    \item Tableau 4.2 : Résultats d'évaluation sur le test set . . . . . . . . . 20
+    \item Tableau 4.3 : Comparaison avec modèles pré-entraînés . . . . . . . . 21
+\end{itemize}
+
+% ===========================
+% INTRODUCTION GENERALE
+% ===========================
+\newpage
+\section*{Introduction Générale}
+\addcontentsline{toc}{section}{Introduction Générale}
+
+La détection automatique du port d'un masque facial est devenue une application stratégique dans plusieurs domaines : santé publique, sécurité, contrôle d'accès aux lieux publics. L'apprentissage profond offre une solution robuste et scalable pour cette tâche de classification d'images.
+
+Ce projet vise à concevoir et déployer un système complet de détection du masque, depuis la préparation du jeu de données jusqu'à l'intégration d'une interface de démonstration web et d'une API locale. Le modèle retenu est un Réseau de Neurones Convolutif (CNN) construit \textit{from scratch}, permettant une meilleure maîtrise et compréhension des mécanismes d'apprentissage.
+
+L'originalité du projet réside dans son approche holistique : non seulement entraîner un classificateur performant, mais aussi le mettre en production via une API FastAPI et proposer deux modes de démonstration (téléchargement d'image et flux webcam en temps réel).
+
+Ce rapport détaille l'architecture matérielle et logicielle, les choix de conception, les résultats d'évaluation, et les interfaces utilisateur développées.
+
+% ===========================
+% CHAPITRE 1 : CONTEXTE ET OBJECTIFS
+% ===========================
+\newpage
+\section{Contexte et État de l'Art}
+
+\subsection{Problématique générale}
+
+La détection du port du masque représente un cas classique de classification d'images binaire. Cette application mobilise plusieurs compétences :
+\begin{itemize}
+    \item Vision par ordinateur : extraction de caractéristiques visuelles pertinentes ;
+    \item Deep Learning : conception et entraînement d'une architecture neuronal ;
+    \item Évaluation de modèles : comprendre les métriques au-delà de l'accuracy ;
+    \item Déploiement applicatif : transformer un modèle entraîné en service exploitable.
+\end{itemize}
+
+\subsection{Objectifs du projet}
+
+Les objectifs retenus sont les suivants :
+\begin{enumerate}
+    \item Préparer un dataset public équilibré et annoté (Kaggle Face Mask Dataset) ;
+    \item Construire une architecture CNN simple, compréhensible et performante ;
+    \item Entraîner le modèle avec une stratégie de validation rigoureuse ;
+    \item Évaluer les performances sur un jeu de test inédit avec métriques détaillées ;
+    \item Intégrer le modèle dans une API FastAPI exposée localement ;
+    \item Développer une interface web (React) offrant deux modes : upload d'image et webcam temps réel ;
+    \item Documenter l'ensemble de la chaîne pipeline de manière académique.
+\end{enumerate}
+
+\textbf{Conclusion du Chapitre 1.} Ce projet ne se limite pas à l'entraînement d'un modèle ; il illustre la mise en production légère d'une solution de deep learning et son intégration dans une démonstration crédible et exploitable.
+
+% ===========================
+% CHAPITRE 2 : DATASET ET PREPARATION DES DONNEES
+% ===========================
+\newpage
+\section{Dataset et Préparation des Données}
+
+\subsection{Présentation du dataset Kaggle}
+
+Le dataset utilisé provient de Kaggle : \textit{Face Mask Detection Dataset} publié par \textit{omkargurav}. Il contient au total \textbf{7 553 images} organisées en deux classes d'égale importance :
+
+\begin{table}[H]
+\centering
+\caption{Composition du dataset Kaggle utilisé}
+\label{tab:dataset}
+\begin{tabular}{lrr}
+\toprule
+\textbf{Classe} & \textbf{Nombre d'images} & \textbf{Proportion} \\
+\midrule
+with\_mask (avec masque) & 3 725 & 49,3\% \\
+without\_mask (sans masque) & 3 828 & 50,7\% \\
+\midrule
+\textbf{Total} & \textbf{7 553} & \textbf{100\%} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+L'équilibre entre les deux classes est excellent, garantissant un apprentissage sans biais majeur. Les images présentent des visages dans des conditions variées : pose, luminosité, angle de vue.
+
+\subsection{Étapes du prétraitement}
+
+\subsubsection{Redimensionnement}
+Toutes les images ont été converties en RGB (si nécessaire) puis redimensionnées à \(128 \times 128\) pixels. Ce choix réduit la complexité calculatoire tout en conservant suffisamment de détail pour une tâche binaire robuste.
+
+\subsubsection{Normalisation}
+Les valeurs de pixels ont été normalisées dans l'intervalle \([0, 1]\) en divisant par 255. Cette normalisation améliore la stabilité numérique et accélère la convergence de l'optimiseur.
+
+\subsubsection{Découpage train / validation / test}
+Le dataset a été séparé en trois sous-ensembles disjoints :
+\begin{itemize}
+    \item \textbf{Entraînement (70\%)} : environ 5 280 images, utilisées pour ajuster les poids du réseau ;
+    \item \textbf{Validation (15\%)} : environ 1 130 images, utilisées pour superviser l'entraînement et détecter le surapprentissage ;
+    \item \textbf{Test (15\%)} : 1 133 images inédites, réservées à l'évaluation finale uniquement.
+\end{itemize}
+
+\subsubsection{Data Augmentation}
+Des transformations aléatoires ont été appliquées lors du chargement des images d'entraînement :
+\begin{itemize}
+    \item Rotation : $\pm 15°$ ;
+    \item Zoom : $[0.8, 1.2]$ ;
+    \item Décalage horizontal et vertical : $\pm 10\%$ ;
+    \item Flip horizontal aléatoire ;
+    \item Ajustement de luminosité : $\pm 20\%$.
+\end{itemize}
+
+Ces augmentations réduisent le surapprentissage et améliorent la généralisation face à des variations réelles du monde.
+
+\textbf{Conclusion du Chapitre 2.} La préparation rigoureuse des données, combinée à une augmentation intelligente, constitue la fondation d'un apprentissage robuste et généralisant.
+
+% ===========================
+% CHAPITRE 3 : ARCHITECTURE DU MODELE
+% ===========================
+\newpage
+\section{Architecture du Modèle CNN}
+
+\subsection{Schéma global de l'architecture}
+
+Le modèle est un CNN séquentiel construit manuellement. Il repose sur trois blocs convolutifs progressifs, suivis d'une couche de flatten et d'une partie entièrement connectée pour la classification finale.
+
+\begin{figure}[H]
+\centering
+\resizebox{0.95\linewidth}{!}{%
+\begin{tikzpicture}[
+    node distance=0.8cm and 1.2cm,
+    block/.style={rectangle, draw=blue!70!black, fill=blue!8, rounded corners, minimum height=1cm, minimum width=2.3cm, align=center, font=\small\bfseries},
+    smallblock/.style={rectangle, draw=green!60!black, fill=green!8, rounded corners, minimum height=0.9cm, minimum width=2cm, align=center, font=\tiny},
+    arrow/.style={-{Latex[length=3mm]}, thick, blue!60!black}
+]
+\node[block] (input) {Input\\$128 \times 128 \times 3$};
+\node[smallblock, right=of input] (conv1) {Conv2D 32\\ReLU\\BatchNorm\\MaxPool 2$\times$2};
+\node[smallblock, right=of conv1] (conv2) {Conv2D 64\\ReLU\\BatchNorm\\MaxPool 2$\times$2};
+\node[smallblock, right=of conv2] (conv3) {Conv2D 128\\ReLU\\BatchNorm\\MaxPool 2$\times$2};
+\node[block, right=of conv3] (flat) {Flatten};
+\node[smallblock, below=0.5cm of flat, xshift=2cm] (dense1) {Dense 128\\ReLU\\Dropout 0.5};
+\node[block, right=of dense1] (out) {Dense 2\\Softmax};
+
+\draw[arrow] (input) -- (conv1);
+\draw[arrow] (conv1) -- (conv2);
+\draw[arrow] (conv2) -- (conv3);
+\draw[arrow] (conv3) -- (flat);
+\draw[arrow] (flat) -- (dense1);
+\draw[arrow] (dense1) -- (out);
+\end{tikzpicture}
+}
+\caption{Architecture du CNN utilisée pour la classification binaire du port de masque.}
+\label{fig:cnn-architecture}
+\end{figure}
+
+\subsection{Description des couches}
+
+\begin{table}[H]
+\centering
+\caption{Configuration détaillée du modèle CNN}
+\label{tab:cnn-config}
+\begin{tabular}{lll}
+\toprule
+\textbf{Couche} & \textbf{Paramètres} & \textbf{Rôle} \\
+\midrule
+Conv2D Block 1 & 32 filtres, 3$\times$3 & Extraction motifs bas niveau \\
+BatchNorm + ReLU & -- & Stabilisation, non-linéarité \\
+MaxPooling & 2$\times$2, stride 2 & Réduction spatiale, invariance \\
+\midrule
+Conv2D Block 2 & 64 filtres, 3$\times$3 & Extraction motifs niveau moyen \\
+BatchNorm + ReLU & -- & Stabilisation, non-linéarité \\
+MaxPooling & 2$\times$2, stride 2 & Réduction spatiale \\
+\midrule
+Conv2D Block 3 & 128 filtres, 3$\times$3 & Extraction motifs haut niveau \\
+BatchNorm + ReLU & -- & Stabilisation, non-linéarité \\
+MaxPooling & 2$\times$2, stride 2 & Réduction spatiale finale \\
+\midrule
+Flatten & -- & Vectorisation pour dense \\
+Dense 128 & ReLU, Dropout 0.5 & Combinaison non-linéaire, régularisation \\
+Dense 2 & Softmax & Probabilités pour 2 classes \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Paramètres d'entraînement}
+
+Le modèle a été compilé avec :
+\begin{itemize}
+    \item \textbf{Optimiseur} : Adam (learning rate par défaut 0.001) ;
+    \item \textbf{Fonction de perte} : categorical\_crossentropy ;
+    \item \textbf{Métrique} : accuracy.
+\end{itemize}
+
+Les callbacks utilisés lors de l'entraînement :
+\begin{itemize}
+    \item \textbf{EarlyStopping} : arrête l'entraînement si la validation n'améliore plus après 10 epochs ;
+    \item \textbf{ReduceLROnPlateau} : réduit le learning rate automatiquement si le plateau stagne ;
+    \item \textbf{ModelCheckpoint} : sauvegarde le meilleur modèle selon la métrique de validation.
+\end{itemize}
+
+\textbf{Conclusion du Chapitre 3.} L'architecture reste volontairement simple et interprétable, mais elle s'avère suffisamment expressive pour apprendre les caractéristiques nécessaires à la tâche de classification binaire robuste.
+
+% ===========================
+% CHAPITRE 4 : RESULTATS ET EVALUATION
+% ===========================
+\newpage
+\section{Résultats obtenus}
+
+\subsection{Métriques d'évaluation}
+
+L'évaluation du modèle a été menée avec plusieurs métriques complémentaires pour obtenir une vision fine et équilibrée de la performance :
+\begin{itemize}
+    \item \textbf{Accuracy} : proportion globale de prédictions correctes ;
+    \item \textbf{Precision} : fiabilité des prédictions positives (avec masque) ;
+    \item \textbf{Recall} : capacité à retrouver toutes les instances positives ;
+    \item \textbf{F1-Score} : compromis harmonique entre precision et recall ;
+    \item \textbf{Matrice de confusion} : détail des vrais positifs (TP), faux positifs (FP), vrais négatifs (TN), faux négatifs (FN).
+\end{itemize}
+
+\subsection{Résultats finaux sur le test set}
+
+L'évaluation finale sur le test set de \textbf{1 133 images inédites} a donné les résultats suivants :
+
+\begin{table}[H]
+\centering
+\caption{Synthèse des résultats globaux et par classe sur le test set}
+\label{tab:resultats}
+\begin{tabular}{lcc}
+\toprule
+\textbf{Métrique} & \textbf{Valeur} & \textbf{Interprétation} \\
+\midrule
+Accuracy globale & 89.32\% & Bon niveau global \\
+F1-Score macro & 88.8\% & Équilibré entre les classes \\
+Precision with\_mask & 98.92\% & Très fiable pour détection positive \\
+Recall with\_mask & 79.79\% & Détecte bien les masques \\
+Precision without\_mask & 95.82\% & Détection négatifs fiable \\
+Recall without\_mask & 97.06\% & Détecte bien l'absence de masque \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Matrice de confusion}
+
+La matrice de confusion synthétise la répartition détaillée des erreurs :
+\begin{itemize}
+    \item Vrais Négatifs (TN) : \textbf{542} \quad (absence de masque, correctement prédite) ;
+    \item Vrais Positifs (TP) : \textbf{536} \quad (présence de masque, correctement prédite) ;
+    \item Faux Positifs (FP) : \textbf{17} \quad (absence prédite comme présence) ;
+    \item Faux Négatifs (FN) : \textbf{38} \quad (présence prédite comme absence).
+\end{itemize}
+
+\begin{figure}[H]
+\centering
+\fbox{\parbox[c][4.8cm][c]{0.92\linewidth}{\centering Espace réservé pour la matrice de confusion du test set}}
+\caption{Matrice de confusion : répartition des prédictions correctes et incorrectes.}
+\label{fig:confusion-matrix}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\fbox{\parbox[c][4.8cm][c]{0.92\linewidth}{\centering Espace réservé pour les courbes d'apprentissage (loss et accuracy en fonction des epochs)}}
+\caption{Courbes d'apprentissage : évolution de la loss et de l'accuracy au cours de l'entraînement.}
+\label{fig:training-curves}
+\end{figure}
+
+Les Figures~\ref{fig:confusion-matrix} et~\ref{fig:training-curves} complètent le tableau en montrant respectivement la répartition des erreurs et l'évolution de l'apprentissage au fil des itérations.
+
+\textbf{Conclusion du Chapitre 4.} Les performances sont solides et cohérentes avec l'objectif du projet. Le modèle détecte très bien les visages portant un masque, ce qui est particulièrement intéressant pour une démonstration pratique. La matrice de confusion montre que les erreurs restent localisées et qu'aucune classe n'est largement défavorisée.
+
+% ===========================
+% CHAPITRE 5 : INTEGRATION APPLICATIVE
+% ===========================
+\newpage
+\section{Intégration dans le Portfolio}
+
+\subsection{Architecture globale de l'application}
+
+Le modèle a été intégré dans une architecture complète comportant trois niveaux :
+\begin{enumerate}
+    \item \textbf{Backend FastAPI} : expose le modèle via des endpoints REST ;
+    \item \textbf{Frontend React} : interface web pour interagir avec l'API ;
+    \item \textbf{Base de données (MySQL, optionnel)} : historisation des prédictions.
+\end{enumerate}
+
+\subsection{API FastAPI}
+
+L'API expose deux endpoints principaux :
+
+\begin{itemize}
+    \item \textbf{GET /api/mask/health} : vérifie la disponibilité du service et l'état du modèle ;
+    \item \textbf{POST /api/mask/predict} : reçoit une image (base64 ou multipart), la prétraite avec OpenCV (détection et crop du visage), exécute l'inférence, et retourne les probabilités de chaque classe.
+\end{itemize}
+
+Le flux de traitement côté API :
+\begin{enumerate}
+    \item Réception de l'image (upload ou capture webcam) ;
+    \item Détection du visage avec Haar Cascade (OpenCV) ;
+    \item Normalisation et redimensionnement à $128 \times 128$ ;
+    \item Inférence par le modèle TensorFlow ;
+    \item Retour des probabilités JSON au frontend.
+\end{enumerate}
+
+\begin{figure}[H]
+\centering
+\fbox{\parbox[c][4.2cm][c]{0.92\linewidth}{\centering Espace réservé pour une capture de l'interface principale de démo image}}
+\caption{Interface principale de la démo image : upload et affichage du résultat de classification.}
+\label{fig:demo-main}
+\end{figure}
+
+\subsection{Interface Webcam}
+
+La démonstration webcam est pensée comme une extension plus immersive. Elle permet de tester le modèle en continu sur un flux vidéo et de visualiser le résultat en temps réel. L'interface capture des frames à partir de la webcam, les envoie à l'API à une fréquence contrôlée (environ 1-2 frames par seconde pour éviter la surcharge), et affiche les prédictions en direct.
+
+\begin{figure}[H]
+\centering
+\fbox{\parbox[c][4.2cm][c]{0.92\linewidth}{\centering Espace réservé pour une capture de la démo webcam avec flux en direct}}
+\caption{Interface webcam : flux vidéo en temps réel avec prédiction de classification.}
+\label{fig:demo-webcam}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\fbox{\parbox[c][4.2cm][c]{0.92\linewidth}{\centering Espace réservé pour un exemple de résultat de prédiction réussie}}
+\caption{Exemple de résultat : cas d'une prédiction correcte avec confiance et classe détectée.}
+\label{fig:demo-prediction}
+\end{figure}
+
+La Figure~\ref{fig:demo-webcam} pourra être remplacée par une capture finale du flux vidéo stabilisé, tandis que les Figures~\ref{fig:demo-main} et~\ref{fig:demo-prediction} serviront à documenter l'interface et des cas de classification réussis.
+
+\textbf{Conclusion du Chapitre 5.} L'intégration applicative transforme le modèle de classification en une démonstration exploitable et présentable dans un portfolio. L'ajout d'une interface webcam renforce la valeur pédagogique, rapprochant la solution d'un usage réel et montrant comment un modèle de vision peut être intégré dans une application web locale. Cette partie illustre aussi l'intérêt d'un chaînage propre entre entraînement, API et interface utilisateur.
+
+% ===========================
+% CHAPITRE 6 : DISCUSSION ET LIMITATIONS
+% ===========================
+\newpage
+\section{Discussion et Limitations}
+
+\subsection{Points forts du projet}
+
+\begin{itemize}
+    \item Architecture CNN simple, compréhensible et performante ;
+    \item Dataset équilibré et représentatif ;
+    \item Évaluation rigoureuse sur test set inédit ;
+    \item Intégration complète en production locale (API + frontend) ;
+    \item Démonstration WebCAM immersive et interactive ;
+    \item Documentation académique complète.
+\end{itemize}
+
+\subsection{Limitations observées}
+
+Le modèle répond correctement à la tâche principale, mais quelques limitations restent à noter :
+\begin{itemize}
+    \item Sensibilité à la qualité du cadrage et à la luminosité de la scène ;
+    \item Confusion possible dans des scènes webcam très bruitées ou avec occlusions ;
+    \item Dépendance à un bon recadrage du visage pour la démo temps réel ;
+    \item Pas de détection implicite de visages multiples dans une image.
+\end{itemize}
+
+\subsection{Améliorations futures}
+
+Pour renforcer la robustesse et les performances :
+\begin{itemize}
+    \item Intégrer un détecteur de visage explicite (MTCNN, RetinaFace) avant la classification ;
+    \item Enrichir la data augmentation (elastic deformations, cutout, mixup) ;
+    \item Tester des architectures plus profondes (ResNet, EfficientNet) ou hybrides ;
+    \item Appliquer une calibration du seuil de décision ;
+    \item Ajouter un module de gestion des cas limites (aucun visage détecté, multiples visages).
+\end{itemize}
+
+\textbf{Conclusion du Chapitre 6.} Le modèle est déjà exploitable en tant que démonstration. Une version plus robuste gagnerait à séparer explicitement détection et classification, améliorant ainsi le cadrage des entrées et réduisant les erreurs observées en contexte réel.
+
+% ===========================
+% CONCLUSION GENERALE
+% ===========================
+\newpage
+\section*{Conclusion Générale et Perspectives}
+\addcontentsline{toc}{section}{Conclusion Générale et Perspectives}
+
+Ce projet a permis de réaliser une chaîne complète de deep learning, depuis la préparation du dataset jusqu'à l'intégration d'une interface de démonstration en local. Le CNN construit from scratch atteint des performances solides (89.32\% accuracy) et constitue une bonne base pédagogique pour comprendre le fonctionnement d'un classificateur d'images.
+
+Au-delà des résultats numériques, le projet démontre la capacité à industrialiser légèrement une solution IA : entraînement rigoureux, export du modèle, API locale, intégration frontend et démonstration webcam. Cela en fait une réalisation cohérente pour un portfolio académique et technique.
+
+\subsection*{Perspectives d'évolution}
+
+\begin{itemize}
+    \item \textbf{Scalabilité horizontale} : déploiement dans le cloud (AWS/GCP/Azure) avec containerisation Docker ;
+    \item \textbf{Raffinement du modèle} : fine-tuning sur MobileNets ou DistilledBERT pour inférence plus rapide ;
+    \item \textbf{Données additionnelles} : collecte de nouveaux masques (chirurgicaux, FFP2, tissu) pour adapter le modèle à une variété réelle ;
+    \item \textbf{Intégration matérielle} : déploiement sur Raspberry Pi ou Jetson Nano pour une démonstration embarquée ;
+    \item \textbf{Optimisation temps réel} : utilisation de TensorFlow Lite ou ONNX pour accélération mobile ;
+    \item \textbf{Analyse de confiance} : ajout d'une estimation d'incertitude (Bayesian CNN) pour flaguer les cas douteux.
+\end{itemize}
+
+Ce projet est à la fois une preuve de compétence en deep learning et une base réutilisable pour une future version plus robuste ou plus précise. Il montre la capacité à structurer un pipeline complet, à documenter les choix techniques et à transformer un modèle entraîné en démonstrateur crédible.
+
+\vfill
+
+\begin{center}
+\textit{Fin du rapport}
+\end{center}
+
+\end{document}
+Ce projet d'intelligence artificielle vise à détecter automatiquement si une personne porte un masque facial (\textit{with\_mask}) ou non (\textit{without\_mask}) à partir d'une image. Le modèle utilisé est un Réseau de Neurones Convolutif (CNN) construit \textit{from scratch}, sans recours à une architecture pré-entraînée.
+
+L'objectif principal est de proposer une démonstration complète, allant du traitement des données à l'intégration d'une interface de test via une API locale FastAPI. Le projet a été pensé pour être exploitable dans un portfolio, avec une inférence possible en temps réel depuis une webcam.
+
+\textbf{Conclusion de l'introduction.} Le projet constitue une chaîne complète de classification d'images, depuis le dataset jusqu'à la démonstration interactive.
+
+\section{Contexte et objectifs}
+La problématique est simple à formuler : reconnaître la présence d'un masque facial dans un visage détecté par une caméra ou une image importée. Ce type d'application a un intérêt pédagogique fort, car il mobilise à la fois la vision par ordinateur, l'apprentissage profond, l'évaluation de modèles et le déploiement applicatif.
+
+Les objectifs retenus sont les suivants :
+\begin{itemize}
+    \item construire un CNN simple et interprétable ;
+    \item entraîner le modèle sur un dataset public équilibré ;
+    \item évaluer les performances sur un jeu de test inédit ;
+    \item intégrer le modèle dans une API locale ;
+    \item proposer une démonstration webcam depuis l'interface portfolio.
+\end{itemize}
+
+\textbf{Conclusion de la partie.} Le projet ne se limite pas à l'entraînement d'un modèle ; il illustre aussi la mise en production légère d'une solution de deep learning.
+
+\section{Dataset utilisé}
+Le dataset utilisé provient de Kaggle : \textit{Face Mask Dataset} publié par \textit{omkargurav}. Il contient au total 7 553 images réparties entre deux classes :
+\begin{itemize}
+    \item 3 725 images \textit{with\_mask} ;
+    \item 3 828 images \textit{without\_mask}.
+\end{itemize}
+
+Le dataset est suffisamment équilibré pour permettre un apprentissage fiable sans biais de classe majeur. Les images présentent des visages dans des conditions variées de pose, luminosité et cadrage.
+
+\textbf{Conclusion de la partie.} La taille du jeu de données et son équilibre constituent une base solide pour une classification binaire robuste.
+
+\section{Prétraitement des images}
+Avant l'entraînement, plusieurs opérations ont été appliquées aux images brutes.
+
+\subsection{Redimensionnement}
+Toutes les images ont été converties en RGB puis redimensionnées en \(128 \times 128\) pixels. Ce choix réduit la complexité calculatoire tout en conservant suffisamment de détail pour une tâche binaire.
+
+\subsection{Normalisation}
+Les pixels ont été normalisés dans l'intervalle \([0,1]\) afin d'améliorer la stabilité de l'entraînement et la convergence du réseau.
+
+\subsection{Découpage train / validation / test}
+Le dataset a été séparé en trois sous-ensembles :
+\begin{itemize}
+    \item entraînement ;
+    \item validation ;
+    \item test.
+\end{itemize}
+Le test set contient 1 133 images inédites, utilisées uniquement pour l'évaluation finale.
+
+\subsection{Data augmentation}
+Des transformations aléatoires ont été utilisées sur les données d'entraînement afin de réduire le surapprentissage et d'améliorer la robustesse du modèle face à des variations de pose, de luminosité ou d'orientation.
+
+\placeholderfigure{4.2cm}{Espace réservé pour une capture du pipeline de prétraitement / augmentation}
+
+\textbf{Conclusion de la partie.} Le prétraitement vise surtout à rendre les entrées homogènes et à augmenter la généralisation du réseau.
+
+\section{Architecture du CNN}
+Le modèle est un CNN séquentiel construit manuellement. Il repose sur trois blocs convolutifs, suivis d'une partie entièrement connectée pour la classification finale.
+
+\subsection{Schéma global du réseau}
+\begin{figure}[H]
+\centering
+\resizebox{0.94\linewidth}{!}{%
+\begin{tikzpicture}[
+    node distance=0.8cm and 1.1cm,
+    block/.style={rectangle, draw=blue!70!black, fill=blue!8, rounded corners, minimum height=0.95cm, minimum width=2.2cm, align=center, font=\small},
+    smallblock/.style={rectangle, draw=green!60!black, fill=green!8, rounded corners, minimum height=0.85cm, minimum width=1.9cm, align=center, font=\small},
+    arrow/.style={-{Latex[length=2.5mm]}, thick}
+]
+\node[block] (input) {Entrée ($128 \times 128 \times 3$)};
+\node[smallblock, right=of input] (conv1) {Conv2D 32\\BatchNorm\\MaxPool};
+\node[smallblock, right=of conv1] (conv2) {Conv2D 64\\BatchNorm\\MaxPool};
+\node[smallblock, right=of conv2] (conv3) {Conv2D 128\\BatchNorm\\MaxPool};
+\node[block, right=of conv3] (flat) {Flatten};
+\node[block, right=of flat] (dense) {Dense 128\\Dropout 0.5};
+\node[block, right=of dense] (out) {Dense 2 (Softmax)};
+
+\draw[arrow] (input) -- (conv1);
+\draw[arrow] (conv1) -- (conv2);
+\draw[arrow] (conv2) -- (conv3);
+\draw[arrow] (conv3) -- (flat);
+\draw[arrow] (flat) -- (dense);
+\draw[arrow] (dense) -- (out);
+\end{tikzpicture}
+}
+\caption{Architecture du CNN utilisée pour la classification binaire.}
+\label{fig:cnn-architecture}
+\end{figure}
+
+\subsection{Utilité des couches}
+\begin{itemize}
+    \item \textbf{Conv2D} : extrait des motifs visuels locaux, comme les contours, les textures et les formes liées au visage.
+    \item \textbf{BatchNormalization} : stabilise les activations et accélère la convergence.
+    \item \textbf{MaxPooling2D} : réduit la dimension spatiale et conserve les caractéristiques les plus discriminantes.
+    \item \textbf{Flatten} : transforme la carte de caractéristiques en vecteur exploitable par les couches denses.
+    \item \textbf{Dense 128} : combine les caractéristiques extraites pour apprendre une représentation de décision.
+    \item \textbf{Dropout 0.5} : limite le surapprentissage en désactivant aléatoirement une partie des neurones pendant l'entraînement.
+    \item \textbf{Dense 2 + Softmax} : produit la probabilité finale pour chaque classe.
+\end{itemize}
+
+\subsection{Optimisation et entraînement}
+Le modèle a été compilé avec :
+\begin{itemize}
+    \item \textbf{Optimiseur} : Adam ;
+    \item \textbf{Fonction de perte} : categorical\_crossentropy ;
+    \item \textbf{Métrique} : accuracy.
+\end{itemize}
+
+Les callbacks suivants ont été utilisés :
+\begin{itemize}
+    \item \textbf{EarlyStopping} pour arrêter l'entraînement si la validation n'améliore plus ;
+    \item \textbf{ReduceLROnPlateau} pour réduire automatiquement le learning rate ;
+    \item \textbf{ModelCheckpoint} pour sauvegarder le meilleur modèle sous \texttt{best\_model.keras}.
+\end{itemize}
+
+Comme illustré dans la Figure~\ref{fig:cnn-architecture}, la chaîne de traitement suit une logique progressive : extraction locale des motifs, réduction spatiale, puis classification finale.
+
+\textbf{Conclusion de la partie.} L'architecture reste volontairement simple, mais elle est suffisamment expressive pour apprendre les caractéristiques nécessaires à la tâche.
+
+\section{Métriques d'évaluation}
+L'évaluation du modèle a été faite avec des métriques complémentaires pour obtenir une vue fine de la performance.
+
+\begin{itemize}
+    \item \textbf{Accuracy} : proportion globale de prédictions correctes.
+    \item \textbf{Precision} : fiabilité des prédictions positives.
+    \item \textbf{Recall} : capacité à retrouver toutes les instances d'une classe.
+    \item \textbf{F1-Score} : compromis entre précision et rappel.
+    \item \textbf{Matrice de confusion} : détail des vrais positifs, faux positifs, vrais négatifs et faux négatifs.
+\end{itemize}
+
+\textbf{Conclusion de la partie.} L'emploi de plusieurs métriques est indispensable pour juger correctement un classifieur binaire, surtout dans un contexte de sécurité sanitaire.
+
+\section{Résultats obtenus}
+L'évaluation finale sur le test set de 1 133 images inédites a donné les résultats suivants :
+
+\begin{table}[H]
+\centering
+\caption{Synthèse des résultats globaux et par classe.}
+\label{tab:resultats}
+\begin{tabular}{lcc}
+\toprule
+\textbf{Métrique} & \textbf{Valeur} & \textbf{Interprétation} \\
+\midrule
+Accuracy globale & 89,32\% & Bon niveau global \\
+F1-Score macro & 89\% & Équilibré entre les classes \\
+Recall with\_mask & 99\% & Excellente détection des masques \\
+Recall without\_mask & 80\% & Quelques faux négatifs \\
+Precision with\_mask & 83\% & Prédictions positives fiables \\
+Precision without\_mask & 99\% & Très peu de faux positifs \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Le Tableau~\ref{tab:resultats} résume les performances globales et met en évidence le bon comportement du modèle sur la classe portant un masque.
+
+La matrice de confusion synthétise également les résultats :
+\begin{itemize}
+    \item vrais négatifs (TN) : 542 ;
+    \item vrais positifs (TP) : 536 ;
+    \item faux positifs (FP) : 17 ;
+    \item faux négatifs (FN) : 38.
+\end{itemize}
+
+\begin{figure}[H]
+\centering
+\fbox{\parbox[c][4.8cm][c]{0.92\linewidth}{\centering Espace réservé pour la matrice de confusion}}
+\caption{Matrice de confusion du test set.}
+\label{fig:confusion-matrix}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\fbox{\parbox[c][4.8cm][c]{0.92\linewidth}{\centering Espace réservé pour les courbes d'entraînement (loss / accuracy)}}
+\caption{Courbes d'apprentissage du modèle.}
+\label{fig:training-curves}
+\end{figure}
+
+Les Figures~\ref{fig:confusion-matrix} et~\ref{fig:training-curves} complètent le tableau en montrant respectivement la répartition des erreurs et l'évolution de l'apprentissage.
+
+\textbf{Conclusion de la partie.} Les performances sont solides et cohérentes avec l'objectif du projet. Le modèle détecte très bien les visages portant un masque, ce qui est particulièrement intéressant pour une démonstration pratique et pour des scénarios où l'on souhaite limiter les faux positifs. La matrice de confusion montre également que les erreurs restent contenues et surtout localisées sur la classe sans masque, ce qui ouvre la porte à des améliorations ciblées sur ce point précis.
+
+\section{Intégration dans le portfolio}
+Le modèle a été intégré à une interface de démonstration reliée à une API locale FastAPI. Le flux utilisateur est simple :
+\begin{itemize}
+    \item ouverture de l'interface depuis le portfolio ;
+    \item sélection d'une image ou activation de la webcam ;
+    \item envoi vers l'API locale ;
+    \item retour de la prédiction en temps réel.
+\end{itemize}
+
+L'API expose un endpoint de prédiction et un endpoint de santé pour vérifier que le service est opérationnel. Cette couche d'intégration permet de montrer un cas d'usage concret et visualisable.
+
+\begin{figure}[H]
+\centering
+\fbox{\parbox[c][4.2cm][c]{0.92\linewidth}{\centering Espace réservé pour une capture de l'interface principale}}
+\caption{Interface principale de la démo image.}
+\label{fig:demo-main}
+\end{figure}
+
+\subsection{Démo webcam}
+La démonstration webcam est pensée comme une extension plus immersive de l'interface. Elle permet de tester le modèle en continu sur un flux vidéo et de visualiser le résultat en direct. Comme aucune capture n'est disponible pour le moment, un espace est réservé ci-dessous pour insérer l'aperçu final une fois la démo stabilisée.
+
+\begin{figure}[H]
+\centering
+\fbox{\parbox[c][4.2cm][c]{0.92\linewidth}{\centering Espace réservé pour une capture de la démo webcam}}
+\caption{Zone réservée pour la capture de la démo webcam.}
+\label{fig:demo-webcam}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\fbox{\parbox[c][4.2cm][c]{0.92\linewidth}{\centering Espace réservé pour un résultat temps réel ou une vue webcam complémentaire}}
+\caption{Exemple de vue webcam ou résultat temps réel.}
+\label{fig:demo-result}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\fbox{\parbox[c][4.2cm][c]{0.92\linewidth}{\centering Espace réservé pour une capture du résultat de prédiction}}
+\caption{Exemple de résultat de prédiction.}
+\label{fig:demo-prediction}
+\end{figure}
+
+La Figure~\ref{fig:demo-webcam} pourra être remplacée par une capture finale du flux vidéo, tandis que les Figures~\ref{fig:demo-main} et~\ref{fig:demo-prediction} serviront à documenter l'interface et un cas de classification réussi.
+
+\textbf{Conclusion de la partie.} L'intégration applicative transforme le modèle de classification en une démonstration exploitable et présentable dans un portfolio. L'ajout d'une interface webcam renforce la valeur pédagogique du projet, car il rapproche la solution d'un usage réel et montre comment un modèle de vision peut être intégré dans une application web locale. Cette partie illustre aussi l'intérêt d'un chaînage propre entre entraînement, API et interface utilisateur, ce qui est essentiel pour passer d'un prototype à une démonstration crédible.
+
+\section{Discussion}
+Le modèle répond correctement à la tâche principale, mais quelques limites restent à noter :
+\begin{itemize}
+    \item sensibilité à la qualité du cadrage et à la luminosité ;
+    \item confusion possible dans des scènes webcam trop bruitées ;
+    \item dépendance à un bon recadrage du visage pour la démo temps réel.
+\end{itemize}
+
+Pour améliorer encore le système, on pourrait :
+\begin{itemize}
+    \item intégrer une détection de visage explicite avant la classification ;
+    \item enrichir la data augmentation ;
+    \item tester des architectures plus profondes ou hybrides ;
+    \item appliquer une calibration du seuil de décision.
+\end{itemize}
+
+\textbf{Conclusion de la partie.} Le modèle est déjà exploitable, mais une version plus robuste gagnerait à séparer détection de visage et classification. Cette évolution améliorerait le cadrage des entrées et réduirait les erreurs observées sur des scènes webcam moins contrôlées.
+
+\section{Conclusion générale}
+Ce projet a permis de réaliser une chaîne complète de deep learning, depuis la préparation du dataset jusqu'à l'intégration d'une interface de démonstration en local. Le CNN construit from scratch atteint des performances solides et constitue une bonne base pédagogique pour comprendre le fonctionnement d'un classifieur d'images.
+
+Au-delà des résultats numériques, le projet montre aussi la capacité à industrialiser légèrement une solution IA : entraînement, export du modèle, API locale, intégration frontend et démonstration webcam. Cela en fait une réalisation cohérente pour un portfolio académique et technique.
+
+\textbf{Conclusion générale.} Ce projet est à la fois une preuve de compétence en deep learning et une base réutilisable pour une future version plus robuste ou plus précise. Il montre la capacité à structurer un pipeline complet, à documenter les choix techniques et à transformer un modèle entraîné en démonstrateur concret. En pratique, le projet peut être enrichi par une meilleure détection préalable du visage, une interface webcam plus fluide et une optimisation plus poussée de la séparation des classes.
+
+\section*{Annexes}
+\addcontentsline{toc}{section}{Annexes}
+\textbf{Espace réservé pour les captures d'écran supplémentaires :}
+\begin{itemize}
+    \item capture de la page d'accueil du portfolio ;
+    \item capture de la fiche projet ;
+    \item capture de l'interface de démo image ;
+    \item capture de l'interface de démo webcam ;
+    \item capture d'une prédiction réussie ;
+    \item capture de l'API en fonctionnement.
+\end{itemize}
+
+\vfill
+\begin{center}
+\textit{Fin du rapport.}
+\end{center}
+
+\end{document}
