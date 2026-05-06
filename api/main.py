@@ -35,14 +35,26 @@ app = FastAPI(title=APP_TITLE, version="1.0.0")
 
 logging.basicConfig(level=logging.INFO)
 
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=[
+# Configure CORS origins via `ALLOWED_ORIGINS` env var (comma-separated). If not set,
+# default to common local dev origins. This allows setting production origins at deploy time.
+allowed_origins_env = os.getenv("ALLOWED_ORIGINS")
+if allowed_origins_env:
+    # allow '*' to be specified explicitly
+    if allowed_origins_env.strip() == "*":
+        allowed_origins = ["*"]
+    else:
+        allowed_origins = [o.strip() for o in allowed_origins_env.split(",") if o.strip()]
+else:
+    allowed_origins = [
         "http://localhost:5173",
         "http://127.0.0.1:5173",
         "http://localhost:4173",
         "http://127.0.0.1:4173",
-    ],
+    ]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=allowed_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -78,8 +90,8 @@ def get_model_cache_token() -> str:
         # check alternative model dir
         candidate_alt = model_dir_alt / name
         if candidate_alt.exists():
-            stat = candidate_alt.stat()
-            return f"{candidate_alt.resolve()}:{stat.st_mtime_ns}:{stat_alt.st_size}"
+            stat_alt = candidate_alt.stat()
+            return f"{candidate_alt.resolve()}:{stat_alt.st_mtime_ns}:{stat_alt.st_size}"
 
     # fallback checks in both locations
     fallback = models_dir / "mask_detection_model"

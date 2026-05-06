@@ -1,3 +1,30 @@
+# Python virtual environments
+.venv/
+.venv2/
+venv/
+
+# Model files (do NOT commit heavy model binaries)
+model/
+models/
+*.keras
+*.h5
+
+# Environment files
+.env
+.env.*
+
+# Editor / OS files
+__pycache__/
+*.pyc
+.DS_Store
+Thumbs.db
+
+# Docker
+node_modules/
+build/
+dist/
+.dockerignore
+*.log
 report/*
 !report/.gitkeep
 !report/mask-detection-cnn_report.pdf
