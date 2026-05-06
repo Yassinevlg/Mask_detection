@@ -12,14 +12,15 @@ except Exception:  # pragma: no cover - cv2 may not be installed in all envs
     cv2 = None
 
 import numpy as np
-import tensorflow as tf
 from fastapi import FastAPI, File, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from PIL import Image
-from tensorflow.keras.models import load_model
 import logging
 import tempfile
 import time
+
+# Lazy import of TensorFlow/Keras is performed inside `get_predict_fn`
+# to allow the app to start even if TF is not installed in some environments.
 
 APP_TITLE = "Mask Detection API"
 DEFAULT_MODEL_NAMES = (
@@ -65,17 +66,31 @@ def get_model_cache_token() -> str:
             return f"{candidate.resolve()}:{stat.st_mtime_ns}:{stat.st_size}"
 
     project_root = Path(__file__).resolve().parents[1]
+    # Support both `models/` (legacy) and `model/` (repo actual) directories
     models_dir = project_root / "models"
+    model_dir_alt = project_root / "model"
     for name in DEFAULT_MODEL_NAMES:
         candidate = models_dir / name
         if candidate.exists():
             stat = candidate.stat()
             return f"{candidate.resolve()}:{stat.st_mtime_ns}:{stat.st_size}"
 
+        # check alternative model dir
+        candidate_alt = model_dir_alt / name
+        if candidate_alt.exists():
+            stat = candidate_alt.stat()
+            return f"{candidate_alt.resolve()}:{stat.st_mtime_ns}:{stat_alt.st_size}"
+
+    # fallback checks in both locations
     fallback = models_dir / "mask_detection_model"
     if fallback.exists():
         stat = fallback.stat()
         return f"{fallback.resolve()}:{stat.st_mtime_ns}:{stat.st_size}"
+
+    fallback_alt = model_dir_alt / "mask_detection_model"
+    if fallback_alt.exists():
+        stat = fallback_alt.stat()
+        return f"{fallback_alt.resolve()}:{stat.st_mtime_ns}:{stat.st_size}"
 
     return "missing-model"
 
@@ -86,7 +101,7 @@ def get_predict_fn(cache_token: str) -> Callable[[np.ndarray], np.ndarray]:
     env_path = os.getenv("MASK_MODEL_PATH")
     candidate_paths = []
 
-    # Ajoute d'abord le chemin du modèle externe reconstructed
+    # external reconstructed path (if present)
     external_model_path = Path("C:/Users/yassi/OneDrive/Bureau/ProjetDeep/FaceMaskDetector/mymodel_reconstructed.keras")
     if external_model_path.exists():
         candidate_paths.insert(0, external_model_path)
@@ -96,42 +111,69 @@ def get_predict_fn(cache_token: str) -> Callable[[np.ndarray], np.ndarray]:
 
     project_root = Path(__file__).resolve().parents[1]
     models_dir = project_root / "models"
-    candidate_paths.extend(models_dir / name for name in DEFAULT_MODEL_NAMES)
+    model_dir_alt = project_root / "model"
+
+    # prefer env, then explicit locations in both `models/` and `model/`
+    for name in DEFAULT_MODEL_NAMES:
+        candidate_paths.append(models_dir / name)
+        candidate_paths.append(model_dir_alt / name)
+
     candidate_paths.append(models_dir / "mask_detection_model")
+    candidate_paths.append(model_dir_alt / "mask_detection_model")
     candidate_paths.append(project_root / "saved_model_mask_detection.keras")
     candidate_paths.append(project_root / "saved_model_mask_detection")
 
+    # Lazy-import heavy dependencies (TensorFlow/Keras) only when loading model
     for candidate in candidate_paths:
-        if candidate.exists():
+        try:
+            if not candidate.exists():
+                continue
+
+            logging.info(f"Chargement du modèle depuis: {candidate.resolve()}")
+
+            # import tensorflow and keras locally to avoid top-level import errors
             try:
-                logging.info(f"Chargement du modèle depuis: {candidate.resolve()}")
-                if candidate.is_dir():
-                    saved_model = tf.saved_model.load(str(candidate))
-                    signature = saved_model.signatures.get("serve")
-                    if signature is None:
-                        signature = next(iter(saved_model.signatures.values()))
+                import tensorflow as tf  # type: ignore
+            except Exception as exc:  # pragma: no cover - surfaced via HTTP error
+                raise RuntimeError(f"Impossible d'importer tensorflow: {exc}") from exc
 
-                    def predict_fn(input_tensor: np.ndarray) -> np.ndarray:
-                        outputs = signature(tf.constant(input_tensor))
-                        if isinstance(outputs, dict):
-                            outputs = next(iter(outputs.values()))
-                        return outputs.numpy()
+            try:
+                from keras.models import load_model  # type: ignore
+            except Exception:
+                # Keras is sometimes under `tensorflow.keras`
+                try:
+                    from tensorflow.keras.models import load_model  # type: ignore
+                except Exception as exc:  # pragma: no cover
+                    raise RuntimeError(f"Impossible d'importer load_model: {exc}") from exc
 
-                    return predict_fn
-
-                keras_model = load_model(candidate)
-                logging.info(f"Modèle Keras chargé avec succès depuis: {candidate.resolve()}")
+            if candidate.is_dir():
+                saved_model = tf.saved_model.load(str(candidate))
+                signature = saved_model.signatures.get("serve")
+                if signature is None:
+                    signature = next(iter(saved_model.signatures.values()))
 
                 def predict_fn(input_tensor: np.ndarray) -> np.ndarray:
-                    return keras_model.predict(input_tensor, verbose=0)
+                    outputs = signature(tf.constant(input_tensor))
+                    if isinstance(outputs, dict):
+                        outputs = next(iter(outputs.values()))
+                    return outputs.numpy()
 
                 return predict_fn
-            except Exception as exc:  # pragma: no cover - surfaced via HTTP error
-                raise RuntimeError(f"Impossible de charger le modele depuis {candidate}: {exc}") from exc
+
+            keras_model = load_model(candidate)
+            logging.info(f"Modèle Keras chargé avec succès depuis: {candidate.resolve()}")
+
+            def predict_fn(input_tensor: np.ndarray) -> np.ndarray:
+                return keras_model.predict(input_tensor, verbose=0)
+
+            return predict_fn
+
+        except Exception as exc:  # pragma: no cover - surfaced via HTTP error
+            raise RuntimeError(f"Impossible de charger le modele depuis {candidate}: {exc}") from exc
 
     raise FileNotFoundError(
-        "Aucun modele trouve. Place mask_detection_model.keras dans plugins/mask-detection-cnn/models/ "
-        "ou definis MASK_MODEL_PATH."
+        "Aucun modele trouve. Placez `mask_detection_model.keras` dans plugins/mask-detection-cnn/model/ "
+        "ou `plugins/mask-detection-cnn/models/`, ou defini\" MASK_MODEL_PATH."
     )
 
 
